@@ -1,48 +1,24 @@
 package server
-
 import "net/http"
-
-func (s *Server) dashboard(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(dashHTML))
-}
-
-const dashHTML = `<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Scribe</title>
-<style>
-:root{--bg:#1a1410;--bg2:#241e18;--bg3:#2e261e;--rust:#c45d2c;--rl:#e8753a;--leather:#a0845c;--cream:#f0e6d3;--cd:#bfb5a3;--cm:#7a7060;--gold:#d4a843;--green:#4a9e5c;--red:#c44040;--mono:'JetBrains Mono',monospace;--serif:'Libre Baskerville',Georgia,serif}
-*{margin:0;padding:0;box-sizing:border-box}body{background:var(--bg);color:var(--cream);font-family:var(--mono);font-size:13px}
-a{color:var(--rl);text-decoration:none}a:hover{color:var(--gold)}
-.hdr{padding:.7rem 1.2rem;border-bottom:1px solid var(--bg3);display:flex;justify-content:space-between;align-items:center}
-.hdr h1{font-family:var(--serif);font-size:1rem}.hdr h1 span{color:var(--rl)}
-.stats{font-size:.7rem;color:var(--leather)}.stats b{color:var(--cream);font-weight:600}
-.main{max-width:700px;margin:0 auto;padding:1.5rem}
-.card{background:var(--bg2);border:1px solid var(--bg3);padding:.8rem 1rem;margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center}
-.card-title{font-size:.8rem;font-weight:600}.card-sub{font-size:.65rem;color:var(--cd)}
-.btn{font-family:var(--mono);font-size:.7rem;padding:.3rem .6rem;border:1px solid;cursor:pointer;background:transparent}
-.btn-p{border-color:var(--rust);color:var(--rl)}.btn-p:hover{background:var(--rust);color:var(--cream)}
-.btn-d{border-color:var(--bg3);color:var(--cm)}.btn-d:hover{border-color:var(--red);color:var(--red)}
-input{background:var(--bg);border:1px solid var(--bg3);color:var(--cream);padding:.4rem .6rem;font-family:var(--mono);font-size:.8rem;width:100%;outline:none;margin-bottom:.5rem}
-input:focus{border-color:var(--rust)}
-.empty{text-align:center;padding:2rem;color:var(--cm);font-style:italic;font-family:var(--serif)}
-</style>
+func(s *Server)dashboard(w http.ResponseWriter,r *http.Request){w.Header().Set("Content-Type","text/html; charset=utf-8");w.Write([]byte(dashHTML))}
+const dashHTML=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Scribe</title>
+<style>:root{--bg:#1a1410;--bg2:#241e18;--bg3:#2e261e;--rust:#c45d2c;--rl:#e8753a;--leather:#a0845c;--cream:#f0e6d3;--cd:#bfb5a3;--cm:#7a7060;--gold:#d4a843;--green:#4a9e5c;--mono:'JetBrains Mono',Consolas,monospace;--serif:'Libre Baskerville',Georgia,serif}*{margin:0;padding:0;box-sizing:border-box}body{background:var(--bg);color:var(--cream);font-family:var(--mono);font-size:13px;line-height:1.6}.hdr{padding:.6rem 1.2rem;border-bottom:1px solid var(--bg3);display:flex;justify-content:space-between;align-items:center}.hdr h1{font-family:var(--serif);font-size:1rem}.hdr h1 span{color:var(--rl)}.main{max-width:700px;margin:0 auto;padding:1rem}.btn{font-family:var(--mono);font-size:.68rem;padding:.3rem .6rem;border:1px solid;cursor:pointer;background:transparent}.btn-p{border-color:var(--rust);color:var(--rl)}.btn-p:hover{background:var(--rust);color:var(--cream)}.rec{background:var(--bg2);border:1px solid var(--bg3);padding:.7rem;margin-bottom:.4rem;cursor:pointer;transition:.1s}.rec:hover{background:var(--bg3)}.rec h3{font-size:.82rem;margin-bottom:.15rem}.rec-meta{font-size:.65rem;color:var(--cm);display:flex;gap:.7rem}.st-pending{color:var(--gold)}.st-done{color:var(--green)}.empty{text-align:center;padding:2rem;color:var(--cm);font-style:italic;font-family:var(--serif)}.modal-bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:100}.modal{background:var(--bg2);border:1px solid var(--bg3);padding:1.5rem;width:95%;max-width:600px;max-height:90vh;overflow-y:auto}.modal h2{font-family:var(--serif);font-size:.9rem;margin-bottom:1rem}label.fl{display:block;font-size:.65rem;color:var(--leather);text-transform:uppercase;letter-spacing:1px;margin-bottom:.2rem;margin-top:.5rem}input[type=text],textarea{background:var(--bg);border:1px solid var(--bg3);color:var(--cream);padding:.35rem .5rem;font-family:var(--mono);font-size:.78rem;width:100%;outline:none}textarea{resize:vertical;min-height:100px}</style>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital@0;1&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-</head><body>
-<div class="hdr"><h1><span>Scribe</span></h1><div class="stats">Total: <b id="ct">-</b></div></div>
-<div class="main">
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-<span style="font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--rust)">All notes</span>
-<button class="btn btn-p" onclick="showCreate()">+ New</button>
-</div>
-<div id="list"></div>
-</div>
+</head><body><div class="hdr"><h1><span>Scribe</span></h1><button class="btn btn-p" onclick="showNew()">+ Recording</button></div>
+<div class="main"><div id="list"></div></div><div id="modal"></div>
 <script>
-async function load(){const r=await fetch('/api/notes');const d=await r.json();document.getElementById('ct').textContent=d.count;
-const el=document.getElementById('list');if(!d.notes.length){el.innerHTML='<div class="empty">No notes yet.</div>';return}
-el.innerHTML=d.notes.map(e=>'<div class="card"><div><div class="card-title">'+esc(e.name||e.title||e.id)+'</div><div class="card-sub">'+esc(e.created_at)+'</div></div><button class="btn btn-d" onclick="del(\''+e.id+'\')">Delete</button></div>').join('')}
-function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}
-function showCreate(){const n=prompt('Name:');if(!n)return;fetch('/api/notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n})}).then(load)}
-async function del(id){if(!confirm('Delete?'))return;await fetch('/api/notes/'+id,{method:'DELETE'});load()}
-load();setInterval(load,30000)
-</script></body></html>` + "`"
+async function api(u,o){return(await fetch(u,o)).json()}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function timeAgo(d){if(!d)return'';const s=Math.floor((Date.now()-new Date(d))/1e3);if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';return Math.floor(s/3600)+'h ago'}
+async function load(){const d=await api('/api/recordings');const recs=d.recordings||[];
+document.getElementById('list').innerHTML=recs.length?recs.map(r=>'<div class="rec" onclick="show(\''+r.id+'\')"><h3>'+esc(r.title)+'</h3><div class="rec-meta">'+(r.duration?'<span>'+esc(r.duration)+'</span>':'')+'<span class="st-'+r.status+'">'+r.status+'</span><span>'+r.word_count+'w</span><span>'+timeAgo(r.created_at)+'</span></div></div>').join(''):'<div class="empty">No recordings yet.</div>'}
+async function show(id){const r=await api('/api/recordings/'+id);
+document.getElementById('modal').innerHTML='<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal"><h2>'+esc(r.title)+'</h2><div style="font-size:.65rem;color:var(--cm);margin-bottom:.5rem">'+(r.source?esc(r.source)+' · ':'')+(r.duration||'')+' · '+r.word_count+' words</div>'+(r.summary?'<div style="padding:.5rem;background:var(--bg);border:1px solid var(--bg3);margin-bottom:.5rem;font-size:.78rem;color:var(--cd)"><b style="color:var(--leather)">Summary:</b> '+esc(r.summary)+'</div>':'')+(r.transcript?'<div style="padding:.5rem;background:var(--bg);border:1px solid var(--bg3);font-size:.78rem;color:var(--cd);white-space:pre-wrap;max-height:300px;overflow-y:auto">'+esc(r.transcript)+'</div>':'')+
+'<div style="display:flex;gap:.3rem;margin-top:.5rem"><button class="btn btn-p" onclick="edit(\''+id+'\')">Edit</button><button class="btn" style="border-color:var(--bg3);color:var(--cm)" onclick="if(confirm(\'Delete?\'))del(\''+id+'\')">Del</button><button class="btn" style="border-color:var(--bg3);color:var(--cm)" onclick="closeModal()">Close</button></div></div></div>'}
+function showNew(){document.getElementById('modal').innerHTML='<div class="modal-bg" onclick="if(event.target===this)closeModal()"><div class="modal"><h2>New Recording</h2><label class="fl">Title</label><input type="text" id="n-title"><label class="fl">Source</label><input type="text" id="n-src" placeholder="Meeting, podcast, interview..."><label class="fl">Duration</label><input type="text" id="n-dur" placeholder="45:00"><label class="fl">Transcript</label><textarea id="n-trans" rows="6"></textarea><label class="fl">Summary</label><textarea id="n-sum" rows="3"></textarea><label class="fl">Tags</label><input type="text" id="n-tags"><div style="display:flex;gap:.5rem;margin-top:1rem"><button class="btn btn-p" onclick="save()">Save</button><button class="btn" style="border-color:var(--bg3);color:var(--cm)" onclick="closeModal()">Cancel</button></div></div></div>'}
+async function save(){const b={title:document.getElementById('n-title').value,source:document.getElementById('n-src').value,duration:document.getElementById('n-dur').value,transcript:document.getElementById('n-trans').value,summary:document.getElementById('n-sum').value,tags:document.getElementById('n-tags').value,status:document.getElementById('n-trans').value?'done':'pending'};if(!b.title){alert('Title required');return};await api('/api/recordings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});closeModal();load()}
+function edit(id){/* simplified */show(id)}
+async function del(id){await api('/api/recordings/'+id,{method:'DELETE'});closeModal();load()}
+function closeModal(){document.getElementById('modal').innerHTML=''}
+load()
+</script></body></html>`

@@ -1,89 +1,17 @@
 package store
-
-import (
-	"database/sql"
-	"fmt"
-	"os"
-	"path/filepath"
-	"time"
-
-	_ "modernc.org/sqlite"
-)
-
-type DB struct { db *sql.DB }
-
-type Note struct {
-	ID           string   `json:"id"`
-	Title        string   `json:"title"`
-	Content      string   `json:"content"`
-	Tags         string   `json:"tags"`
-	CreatedAt    string   `json:"created_at"`
-}
-
-func Open(dataDir string) (*DB, error) {
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
-		return nil, err
-	}
-	dsn := filepath.Join(dataDir, "scribe.db") + "?_journal_mode=WAL&_busy_timeout=5000"
-	db, err := sql.Open("sqlite", dsn)
-	if err != nil {
-		return nil, err
-	}
-	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS notes (
-			id TEXT PRIMARY KEY,\n\t\t\ttitle TEXT DEFAULT '',\n\t\t\tcontent TEXT DEFAULT '',\n\t\t\ttags TEXT DEFAULT '',
-			created_at TEXT DEFAULT (datetime('now'))
-		)`)
-	if err != nil {
-		return nil, fmt.Errorf("migrate: %w", err)
-	}
-	return &DB{db: db}, nil
-}
-
-func (d *DB) Close() error { return d.db.Close() }
-
-func genID() string { return fmt.Sprintf("%d", time.Now().UnixNano()) }
-
-func (d *DB) Create(e *Note) error {
-	e.ID = genID()
-	e.CreatedAt = time.Now().UTC().Format(time.RFC3339)
-	_, err := d.db.Exec(`INSERT INTO notes (id, title, content, tags, created_at) VALUES (?, ?, ?, ?, ?)`,
-		e.ID, e.Title, e.Content, e.Tags, e.CreatedAt)
-	return err
-}
-
-func (d *DB) Get(id string) *Note {
-	row := d.db.QueryRow(`SELECT id, title, content, tags, created_at FROM notes WHERE id=?`, id)
-	var e Note
-	if err := row.Scan(&e.ID, &e.Title, &e.Content, &e.Tags, &e.CreatedAt); err != nil {
-		return nil
-	}
-	return &e
-}
-
-func (d *DB) List() []Note {
-	rows, err := d.db.Query(`SELECT id, title, content, tags, created_at FROM notes ORDER BY created_at DESC`)
-	if err != nil {
-		return nil
-	}
-	defer rows.Close()
-	var result []Note
-	for rows.Next() {
-		var e Note
-		if err := rows.Scan(&e.ID, &e.Title, &e.Content, &e.Tags, &e.CreatedAt); err != nil {
-			continue
-		}
-		result = append(result, e)
-	}
-	return result
-}
-
-func (d *DB) Delete(id string) error {
-	_, err := d.db.Exec(`DELETE FROM notes WHERE id=?`, id)
-	return err
-}
-
-func (d *DB) Count() int {
-	var n int
-	d.db.QueryRow(`SELECT COUNT(*) FROM notes`).Scan(&n)
-	return n
-}
+import ("database/sql";"fmt";"os";"path/filepath";"strings";"time";_ "modernc.org/sqlite")
+type DB struct{db *sql.DB}
+type Recording struct { ID string `json:"id"`; Title string `json:"title"`; Duration string `json:"duration,omitempty"`; Source string `json:"source,omitempty"`; Transcript string `json:"transcript,omitempty"`; Summary string `json:"summary,omitempty"`; Tags string `json:"tags,omitempty"`; Status string `json:"status"`; CreatedAt string `json:"created_at"`; WordCount int `json:"word_count"` }
+func Open(d string)(*DB,error){if err:=os.MkdirAll(d,0755);err!=nil{return nil,err};db,err:=sql.Open("sqlite",filepath.Join(d,"scribe.db")+"?_journal_mode=WAL&_busy_timeout=5000");if err!=nil{return nil,err}
+db.Exec(`CREATE TABLE IF NOT EXISTS recordings(id TEXT PRIMARY KEY,title TEXT NOT NULL,duration TEXT DEFAULT '',source TEXT DEFAULT '',transcript TEXT DEFAULT '',summary TEXT DEFAULT '',tags TEXT DEFAULT '',status TEXT DEFAULT 'pending',created_at TEXT DEFAULT(datetime('now')))`)
+return &DB{db:db},nil}
+func(d *DB)Close()error{return d.db.Close()}
+func genID()string{return fmt.Sprintf("%d",time.Now().UnixNano())}
+func now()string{return time.Now().UTC().Format(time.RFC3339)}
+func(d *DB)Create(r *Recording)error{r.ID=genID();r.CreatedAt=now();if r.Status==""{r.Status="pending"};r.WordCount=len(strings.Fields(r.Transcript));_,err:=d.db.Exec(`INSERT INTO recordings VALUES(?,?,?,?,?,?,?,?,?)`,r.ID,r.Title,r.Duration,r.Source,r.Transcript,r.Summary,r.Tags,r.Status,r.CreatedAt);return err}
+func(d *DB)Get(id string)*Recording{var r Recording;if d.db.QueryRow(`SELECT * FROM recordings WHERE id=?`,id).Scan(&r.ID,&r.Title,&r.Duration,&r.Source,&r.Transcript,&r.Summary,&r.Tags,&r.Status,&r.CreatedAt)!=nil{return nil};r.WordCount=len(strings.Fields(r.Transcript));return &r}
+func(d *DB)List()[]Recording{rows,_:=d.db.Query(`SELECT * FROM recordings ORDER BY created_at DESC`);if rows==nil{return nil};defer rows.Close();var o []Recording;for rows.Next(){var r Recording;rows.Scan(&r.ID,&r.Title,&r.Duration,&r.Source,&r.Transcript,&r.Summary,&r.Tags,&r.Status,&r.CreatedAt);r.WordCount=len(strings.Fields(r.Transcript));o=append(o,r)};return o}
+func(d *DB)Update(id string,r *Recording)error{r.WordCount=len(strings.Fields(r.Transcript));_,err:=d.db.Exec(`UPDATE recordings SET title=?,duration=?,source=?,transcript=?,summary=?,tags=?,status=? WHERE id=?`,r.Title,r.Duration,r.Source,r.Transcript,r.Summary,r.Tags,r.Status,id);return err}
+func(d *DB)Delete(id string)error{_,err:=d.db.Exec(`DELETE FROM recordings WHERE id=?`,id);return err}
+func(d *DB)Search(q string)[]Recording{s:="%"+q+"%";rows,_:=d.db.Query(`SELECT * FROM recordings WHERE title LIKE ? OR transcript LIKE ? ORDER BY created_at DESC`,s,s);if rows==nil{return nil};defer rows.Close();var o []Recording;for rows.Next(){var r Recording;rows.Scan(&r.ID,&r.Title,&r.Duration,&r.Source,&r.Transcript,&r.Summary,&r.Tags,&r.Status,&r.CreatedAt);r.WordCount=len(strings.Fields(r.Transcript));o=append(o,r)};return o}
+func(d *DB)Count()int{var n int;d.db.QueryRow(`SELECT COUNT(*) FROM recordings`).Scan(&n);return n}
